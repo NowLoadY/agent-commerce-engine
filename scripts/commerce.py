@@ -98,6 +98,14 @@ def main():
 
     subparsers.add_parser("promotions", help="View current promotions")
     subparsers.add_parser("orders", help="List recent orders")
+
+    order_p = subparsers.add_parser("create-order", help="Create an order from cart")
+    order_p.add_argument("--name", required=True, help="Recipient name")
+    order_p.add_argument("--phone", required=True, help="Recipient phone")
+    order_p.add_argument("--province", required=True, help="Province/State")
+    order_p.add_argument("--city", required=True, help="City")
+    order_p.add_argument("--address", required=True, help="Detailed address")
+
     subparsers.add_parser("brand-story", help="Get brand narrative/story")
     subparsers.add_parser("company-info", help="Get formal company information")
     subparsers.add_parser("contact-info", help="Get official contact details")
@@ -170,6 +178,16 @@ def main():
 
     elif args.command == "orders":
         format_output(client.list_orders())
+
+    elif args.command == "create-order":
+        shipping_data = {
+            "name": args.name,
+            "phone": args.phone,
+            "province": args.province,
+            "city": args.city,
+            "address": args.address
+        }
+        format_output(client.create_order(shipping_data))
 
     elif args.command == "brand-story":
         format_output(client.get_brand_info("story"))

@@ -219,3 +219,11 @@ class BaseCommerceClient:
 
     def list_orders(self):
         return self.request("GET", "/orders")
+
+    def create_order(self, shipping: Dict):
+        """
+        Creates an order from the current shopping cart.
+        Requires a shipping dictionary with necessary fields like name, phone, province, city, address.
+        """
+        payload = {"shipping": shipping}
+        return self.request("POST", "/orders", json=payload)

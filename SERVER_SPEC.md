@@ -122,6 +122,12 @@ async def view_cart(x_visitor_id: Optional[str] = Header(None)):
 `GET /user/profile` | `PUT /user/profile`
 - **Schema**: Should support common fields like `name`, `address`, and `phone`.
 
+### E. Checkout & Payment Handoff
+`POST /orders` | `GET /orders`
+- **Request Body (POST)**: `{ "shipping": { "name": "...", "phone": "...", "province": "...", "city": "...", "address": "..." } }`
+- **Behavior (POST)**: Transforms the current cart (identified securely by Token or Visitor ID) into a formal Order. Must clear the active cart upon success and return an `<ORDER_ID>`.
+- **Payment Limitation (Crucial)**: Automated agents currently cannot complete interactive consumer payments (like credit card 3D Secure, Apple Pay, WeChat Pay). Wait for the API to return a payment link or an order dashboard URL (e.g. `https://yourstore.com/orders/<ORDER_ID>`). The Agent must deliver this final URL to the human to complete checkout.
+
 ---
 
 ## 4. Best Practices for "Agent-Friendliness"
