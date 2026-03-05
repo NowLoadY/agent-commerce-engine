@@ -80,12 +80,12 @@ Clawdhub链接: https://clawdhub.com/NowLoadY/agent-commerce-engine
     python3 scripts/commerce.py list
     ```
     
-## 实例
+## Examples
 
-参考如何利用本标准引擎驱动实际的 Agent 商业体验：
+To see how this core engine is used to build brand-specific experiences:
 
-- **在线 Skill**: [辣匪兔: Authentic Agentic Spicy Food Delivery](https://clawdhub.com/NowLoadY/agentic-spicy-food)
-- **参考实现源码**: [辣匪兔 Skill 仓库](https://github.com/NowLoadY/agent-skill-online-shopping-spicy-food)
+- **Reference Skill**: Explore any compatible "Skill" on Clawdhub that implements the `SERVER_SPEC.md` protocol.
+- **Implementation Pattern**: Review repository architectures that build upon this `BaseCommerceClient` to handle specific gourmet, retail, or service catalogs.
 
 ## 许可协议
 

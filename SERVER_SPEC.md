@@ -35,8 +35,8 @@ async def list_products(q: Optional[str] = None, page: int = 1, limit: int = 50)
                 "description": "Light roast with floral notes.",
                 "category": "coffee",
                 "variants": [
-                    {"variant": "250g", "price": 18.00},
-                    {"variant": "500g", "price": 32.00, "label": "Best Value"}
+                    {"variant": "250g", "price": 18.00, "currency": "USD"},
+                    {"variant": "500g", "price": 32.00, "currency": "USD", "label": "Best Value"}
                 ]
             }
         ]
@@ -62,8 +62,9 @@ async def view_cart(x_visitor_id: Optional[str] = Header(None)):
     return {
         "success": True,
         "totalPrice": 18.00,
+        "currency": "USD",
         "items": [
-            {"product_slug": "premium-coffee-beans", "variant": "250g", "quantity": 1, "price": 18.00}
+            {"product_slug": "premium-coffee-beans", "variant": "250g", "quantity": 1, "price": 18.00, "currency": "USD"}
         ]
     }
 
@@ -116,7 +117,7 @@ async def view_cart(x_visitor_id: Optional[str] = Header(None)):
 - **Required Model Attributes (Product Object)**:
   - `slug`: String
   - `name`: String
-  - `variants` (or array of objects): Must contain a `variant` key (String or Number) and `price` (Number). *(Note: Legacy `gram` is also supported for backward compatibility)*
+  - `variants`: Must contain a `variant` key, `price` (Number), and `currency` (String, e.g., "CNY", "USD").
 
 ### B. Brand Information
 `GET /brand?category=<type>`
@@ -125,7 +126,7 @@ async def view_cart(x_visitor_id: Optional[str] = Header(None)):
 ### C. Shopping Cart
 `GET /cart` | `POST /cart` | `PUT /cart` | `DELETE /cart`
 - **Request Body**: `{ "product_slug": string, "variant": string/number, "quantity": number }`. 
-- **Response**: Return the full cart snapshot including `totalPrice` and `items`.
+- **Response**: Return the full cart snapshot including `totalPrice`, `currency`, and `items` (each item should also carry its `currency`).
 
 ### D. User Profile
 `GET /user/profile` | `PUT /user/profile`
@@ -149,5 +150,4 @@ async def view_cart(x_visitor_id: Optional[str] = Header(None)):
 
 ---
 
-## 5. Live Examples
-- **Lafeitu API Demo (Node.js/Next.js)**: [Check the /api/v1 handlers](https://github.com/NowLoadY/lafeitu_official/tree/main/next-app/pages/api/v1).
+---

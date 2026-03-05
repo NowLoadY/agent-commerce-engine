@@ -25,12 +25,51 @@ BRAND_ID = os.getenv("COMMERCE_BRAND_ID", "generic_store")
 
 client = BaseCommerceClient(BASE_URL, BRAND_ID)
 
-def format_output(data):
+def get_currency_symbol(code):
+    symbols = {"CNY": "¥", "USD": "$", "EUR": "€", "GBP": "£", "JPY": "¥"}
+    return symbols.get(code, f"{code} ")
+
+def format_output(data, command=None):
     if isinstance(data, dict) and "error" in data:
-        # 增加配置提示建议
         if "Connection error" in data["error"] and "yourstore.com" in BASE_URL:
             data["hint"] = "It looks like you are using the default URL. Set COMMERCE_URL environment variable to your API endpoint."
-    print(json.dumps(data, indent=2, ensure_ascii=False))
+    
+    if command == "cart" and isinstance(data, dict) and data.get("success") and "items" in data:
+        if not data["items"]:
+            print("Your cart is empty.")
+        else:
+            curr = data.get("currency", "USD")
+            print(f"{'Item':<25} | {'Variant':<15} | {'Price':<10} | {'Qty':<4} | {'Subtotal':<10}")
+            for item in data["items"]:
+                name = item.get("product_name", item.get("product_slug", ""))
+                variant = item.get("variant", item.get("gram", ""))
+                price = item.get("price", 0)
+                qty = item.get("quantity", 0)
+                subtotal = price * qty
+                i_sym = get_currency_symbol(item.get("currency", curr))
+                print(f"{name[:25]:<25} | {str(variant):<15} | {i_sym}{price:<9.2f} | {qty:<4} | {i_sym}{subtotal:<9.2f}")
+            
+            tp = data.get("totalPrice", 0)
+            cur = get_currency_symbol(data.get("currency", curr))
+            print(f"Total: {cur}{tp:.2f}")
+
+    elif command == "list" and isinstance(data, dict) and data.get("success") and "products" in data:
+        for p in data["products"]:
+            name = p.get("name")
+            slug = p.get("slug")
+            print(f"• {name} ({slug})")
+            if p.get("variants"):
+                v_list = []
+                for v in p["variants"]:
+                    v_name = v.get("variant", v.get("gram"))
+                    v_price = v.get("price")
+                    v_curr = get_currency_symbol(v.get("currency", "USD"))
+                    v_list.append(f"{v_name}: {v_curr}{v_price}")
+                print(f"  Variants: {' | '.join(v_list)}")
+        print(f"Total: {data.get('total')} items found | Page {data.get('page')}/{data.get('totalPages')}")
+
+    else:
+        print(json.dumps(data, indent=2, ensure_ascii=False))
 
 def main():
     parser = argparse.ArgumentParser(description=f"{BRAND_NAME} AI-Native Commerce CLI Tool")
@@ -147,10 +186,10 @@ def main():
         format_output({"success": True, "message": f"Logged out from {BRAND_ID}."})
 
     elif args.command == "search":
-        format_output(client.search_products(args.query, args.page, args.limit))
+        format_output(client.search_products(args.query, args.page, args.limit), "list")
 
     elif args.command == "list":
-        format_output(client.list_products(args.page, args.limit))
+        format_output(client.list_products(args.page, args.limit), "list")
 
     elif args.command == "get":
         format_output(client.get_product(args.slug))
@@ -163,7 +202,7 @@ def main():
         format_output(client.update_profile(data))
 
     elif args.command == "cart":
-        format_output(client.get_cart())
+        format_output(client.get_cart(), "cart")
 
     elif args.command == "add-cart":
         format_output(client.modify_cart("add", args.slug, args.variant, args.quantity))
