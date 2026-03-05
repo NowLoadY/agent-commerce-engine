@@ -3,31 +3,58 @@ import json
 import os
 import uuid
 from pathlib import Path
+from urllib.parse import urlparse
 from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 from typing import Optional, Dict, Any, List
 
 class BaseCommerceClient:
     """
-    通用电商 API 基础客户端，支持无状态身份验证、购物车管理、产品查询等。
-    已升级：支持基于 Token 的安全身份验证，不再持久化或传输明文密码。
+    Universal Agentic Commerce client. Supports stateless token-based auth,
+    cart management, product discovery, and multi-merchant credential isolation.
+
+    Credentials are stored per-domain under:
+      ~/.clawdbot/credentials/agent-commerce-engine/<domain>/
     """
-    def __init__(self, base_url: str, brand_id: str):
+    def __init__(self, base_url: str, brand_id: str = None):
         self.base_url = base_url.rstrip('/')
-        
+
         # Security: Enforce HTTPS for production endpoints
         if not self.base_url.startswith('https://') and not any(h in self.base_url for h in ['localhost', '127.0.0.1']):
             raise ValueError(f"Insecure URL blocked: Commerce API must use HTTPS. Provided: {self.base_url}")
-            
-        self.brand_id = brand_id
-        
-        # 标准 Clawdbot 凭证目录
-        self.config_dir = Path.home() / ".clawdbot" / "credentials" / "agent-commerce-engine"
+
+        # Derive store_id from the URL domain (e.g., "shop.example.com")
+        parsed = urlparse(self.base_url)
+        self.store_id = parsed.hostname or "unknown"
+
+        # DEPRECATED: brand_id is kept for backward compatibility.
+        # Brand-specific skills may still pass it for display purposes.
+        # Will be removed in a future major version.
+        self.brand_id = brand_id or self.store_id
+
+        # Credential storage: isolated per domain
+        self.config_dir = Path.home() / ".clawdbot" / "credentials" / "agent-commerce-engine" / self.store_id
         self.config_dir.mkdir(parents=True, exist_ok=True)
-        
-        self.creds_file = self.config_dir / f"{brand_id}_creds.json"
-        self.visitor_file = self.config_dir / f"{brand_id}_visitor.json"
+
+        self.creds_file = self.config_dir / "creds.json"
+        self.visitor_file = self.config_dir / "visitor.json"
+
+        # MIGRATION: If old flat-file credentials exist, migrate them to the new structure
+        self._migrate_legacy_credentials(brand_id)
+
         self.session = self._setup_session()
+
+    def _migrate_legacy_credentials(self, legacy_brand_id: str = None):
+        """Migrate old flat-file credentials ({brand_id}_creds.json) to new per-domain subfolder."""
+        if legacy_brand_id is None:
+            return
+        legacy_dir = self.config_dir.parent  # ~/.clawdbot/credentials/agent-commerce-engine/
+        legacy_creds = legacy_dir / f"{legacy_brand_id}_creds.json"
+        legacy_visitor = legacy_dir / f"{legacy_brand_id}_visitor.json"
+        if legacy_creds.exists() and not self.creds_file.exists():
+            legacy_creds.rename(self.creds_file)
+        if legacy_visitor.exists() and not self.visitor_file.exists():
+            legacy_visitor.rename(self.visitor_file)
 
     def _setup_session(self):
         s = requests.Session()
@@ -113,13 +140,19 @@ class BaseCommerceClient:
             data = response.json()
             if not isinstance(data, dict):
                 data = {"result": data}
-            if response.status_code >= 400 and "status_code" not in data:
-                data["status_code"] = response.status_code
+            if response.status_code >= 400:
+                data.setdefault("success", False)
+                data.setdefault("status_code", response.status_code)
+                # Map common HTTP errors to standard codes if backend didn't provide one
+                if "error" not in data:
+                    code_map = {401: "AUTH_REQUIRED", 403: "ACTION_DENIED", 404: "PRODUCT_NOT_FOUND", 429: "RATE_LIMITED", 500: "INTERNAL_ERROR"}
+                    data["error"] = code_map.get(response.status_code, "BAD_REQUEST")
             return data
         except:
             return {
                 "success": False,
-                "error": f"Invalid API response (HTTP {response.status_code})",
+                "error": "INTERNAL_ERROR",
+                "instruction": f"Server returned non-JSON response (HTTP {response.status_code}).",
                 "status_code": response.status_code
             }
 

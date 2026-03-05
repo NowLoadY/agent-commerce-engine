@@ -14,16 +14,16 @@ except ImportError:
     }))
     sys.exit(1)
 
-# 添加 lib 路径到 sys.path
+# Add lib path to sys.path
 sys.path.append(str(Path(__file__).parent))
 from lib.commerce_client import BaseCommerceClient
 
-# 从环境变量获取配置，方便开发者直接使用命令：COMMERCE_URL=... python3 commerce.py
-BRAND_NAME = os.getenv("COMMERCE_BRAND_NAME", "Generic Commerce")
-BASE_URL = os.getenv("COMMERCE_URL", "https://api.yourstore.com/v1")
-BRAND_ID = os.getenv("COMMERCE_BRAND_ID", "generic_store")
-
-client = BaseCommerceClient(BASE_URL, BRAND_ID)
+# DEPRECATED: Environment variable configuration.
+# Prefer using --store argument for multi-merchant support.
+# These env vars will be removed in a future major version.
+_ENV_URL = os.getenv("COMMERCE_URL")
+_ENV_BRAND_ID = os.getenv("COMMERCE_BRAND_ID")
+_ENV_BRAND_NAME = os.getenv("COMMERCE_BRAND_NAME", "Commerce Store")
 
 def get_currency_symbol(code):
     symbols = {"CNY": "¥", "USD": "$", "EUR": "€", "GBP": "£", "JPY": "¥"}
@@ -31,8 +31,8 @@ def get_currency_symbol(code):
 
 def format_output(data, command=None):
     if isinstance(data, dict) and "error" in data:
-        if "Connection error" in data["error"] and "yourstore.com" in BASE_URL:
-            data["hint"] = "It looks like you are using the default URL. Set COMMERCE_URL environment variable to your API endpoint."
+        if "Connection error" in str(data.get("error", "")) and _ENV_URL is None:
+            data["hint"] = "No store URL configured. Use --store <url> or set COMMERCE_URL env var."
     
     if command == "cart" and isinstance(data, dict) and data.get("success") and "items" in data:
         if not data["items"]:
@@ -72,7 +72,13 @@ def format_output(data, command=None):
         print(json.dumps(data, indent=2, ensure_ascii=False))
 
 def main():
-    parser = argparse.ArgumentParser(description=f"{BRAND_NAME} AI-Native Commerce CLI Tool")
+    parser = argparse.ArgumentParser(description="Agentic Commerce Engine — Universal CLI")
+
+    # Global argument: --store for multi-merchant targeting
+    parser.add_argument("--store", metavar="URL",
+                        help="Target store API URL (e.g., https://api.yourstore.com/v1). "
+                             "Overrides COMMERCE_URL env var.")
+
     subparsers = parser.add_subparsers(dest="command", help="Command type")
 
     # 1. Auth (login/logout/register/send-code)
@@ -155,14 +161,27 @@ def main():
 
     args = parser.parse_args()
 
+    # Resolve store URL: --store > COMMERCE_URL env var > error
+    store_url = args.store or _ENV_URL
+    if not store_url:
+        print(json.dumps({
+            "success": False,
+            "error": "BAD_REQUEST",
+            "instruction": "No store URL provided. Use --store <url> or set COMMERCE_URL env var."
+        }, indent=2))
+        sys.exit(1)
+
+    # Initialize client with resolved URL
+    # DEPRECATED: brand_id from env var, will be removed in future version
+    client = BaseCommerceClient(store_url, _ENV_BRAND_ID)
+
     # Execution logic
     if args.command == "login":
-        # 升级：不再直接保存密码，而是换取 Token
         result = client.get_api_token(args.account, args.password)
         if result.get("success"):
             format_output({
                 "success": True, 
-                "message": f"Login successful. API Token for {BRAND_ID} saved.",
+                "message": f"Login successful. Token for {client.store_id} saved.",
                 "storage": str(client.creds_file),
                 "permission": "0600 (Private)"
             })
@@ -183,7 +202,7 @@ def main():
 
     elif args.command == "logout":
         client.delete_credentials()
-        format_output({"success": True, "message": f"Logged out from {BRAND_ID}."})
+        format_output({"success": True, "message": f"Logged out from {client.store_id}."})
 
     elif args.command == "search":
         format_output(client.search_products(args.query, args.page, args.limit), "list")
