@@ -169,11 +169,11 @@ class BaseCommerceClient:
 
     # --- 核心业务接口 ---
     
-    def search_products(self, query: str):
-        return self.request("GET", "/products", params={"q": query})
+    def search_products(self, query: str, page: int = 1, limit: int = 50):
+        return self.request("GET", "/products", params={"q": query, "page": page, "limit": limit})
 
-    def list_products(self):
-        return self.request("GET", "/products")
+    def list_products(self, page: int = 1, limit: int = 50):
+        return self.request("GET", "/products", params={"page": page, "limit": limit})
 
     def get_product(self, slug: str):
         return self.request("GET", f"/products/{slug}")
@@ -191,20 +191,17 @@ class BaseCommerceClient:
         method = "POST" if action == "add" else "PUT"
         payload = {
             "product_slug": product_slug,
+            "variant": variant,
             "quantity": quantity
         }
-        # Backward compatibility for Lafeitu's gram-based system, but support general variants
-        if str(variant).isdigit():
-            payload["gram"] = int(variant)
-        payload["variant"] = variant
 
         return self.request(method, "/cart", json=payload)
 
     def remove_from_cart(self, product_slug: str, variant: str):
-        payload = {"product_slug": product_slug}
-        if str(variant).isdigit():
-            payload["gram"] = int(variant)
-        payload["variant"] = variant
+        payload = {
+            "product_slug": product_slug,
+            "variant": variant
+        }
         
         return self.request("DELETE", "/cart", json=payload)
 

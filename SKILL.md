@@ -1,6 +1,6 @@
 ---
 name: standard-agentic-commerce-engine
-version: 1.5.0
+version: 1.5.1
 description: A production-ready universal engine for Agentic Commerce. This tool enables autonomous agents to interact with any compatible headless e-commerce backend through a standardized protocol. It provides out-of-the-box support for discovery, cart operations, and secure user management.
 tags: [ecommerce, shopping-agent, commerce-engine, standard-protocol, headless-commerce, agentic-web]
 metadata: {"clawdbot":{"emoji":"🛒","requires":{"bins":["python3"],"tools":[],"env":["COMMERCE_URL","COMMERCE_BRAND_ID"],"paths":["~/.clawdbot/credentials/agent-commerce-engine/"]},"install":[{"id":"python-deps","kind":"pip","package":"requests","label":"Install Python dependencies"}]}}
@@ -59,8 +59,8 @@ Follow these logical flows to ensure a high-quality user experience:
 ### 1. Product Discovery & Validation
 **Goal**: Ensure the item exists and find the correct specifications before taking action.
 - **Action**: Always run `search` or `list` before adding to cart.
-- **Logic**: Use the API to discover the correct `slug` and valid `variant` specs.
-- **Refinement**: If multiple results are found, ask the user to specify based on the returned attributes.
+- **Logic**: Use the API to discover the correct `slug` and valid `variant` specs. Use `--page` and `--limit` arguments to safely navigate large catalogs without overwhelming the context limit.
+- **Refinement**: If multiple results are found, ask the user to specify based on the returned attributes. If `totalPages > page` in the results, consider fetching the next page or refining the search.
 
 ### 2. Authentication & Profile Flow
 **Goal**: Manage user privacy and session data.
@@ -99,7 +99,7 @@ Follow these logical flows to ensure a high-quality user experience:
 
 ## 🚀 Capabilities Summary
 
-- **`search` / `list`**: Product discovery and inventory scan.
+- **`search` / `list`**: Product discovery and inventory scan. Use `--page <N>` and `--limit <N>` to safely paginate through large catalogs.
 - **`get`**: Deep dive into product specifications, variants, and pricing.
 - **`promotions`**: Current business rules, shipping thresholds, and active offers.
 - **`cart`**: Complete session summary including VIP discounts and tax/shipping estimates.
@@ -119,7 +119,7 @@ export COMMERCE_URL="https://api.yourbrand.com/v1"
 export COMMERCE_BRAND_ID="brand_slug"
 
 # Actions
-python3 scripts/commerce.py list
+python3 scripts/commerce.py list --page 1 --limit 20
 python3 scripts/commerce.py search "item"
 python3 scripts/commerce.py get <slug>
 python3 scripts/commerce.py add-cart <slug> --variant <variant_id>

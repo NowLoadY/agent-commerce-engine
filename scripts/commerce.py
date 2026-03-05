@@ -58,8 +58,12 @@ def main():
     # 2. Products (search/list/get)
     search_p = subparsers.add_parser("search", help="Search for products")
     search_p.add_argument("query", help="Keywords")
+    search_p.add_argument("--page", type=int, default=1, help="Page number")
+    search_p.add_argument("--limit", type=int, default=50, help="Items per page")
 
-    subparsers.add_parser("list", help="List all products")
+    list_p = subparsers.add_parser("list", help="List all products")
+    list_p.add_argument("--page", type=int, default=1, help="Page number")
+    list_p.add_argument("--limit", type=int, default=50, help="Items per page")
 
     get_p = subparsers.add_parser("get", help="Get specific product details")
     get_p.add_argument("slug", help="Product unique identifier (slug)")
@@ -143,10 +147,10 @@ def main():
         format_output({"success": True, "message": f"Logged out from {BRAND_ID}."})
 
     elif args.command == "search":
-        format_output(client.search_products(args.query))
+        format_output(client.search_products(args.query, args.page, args.limit))
 
     elif args.command == "list":
-        format_output(client.list_products())
+        format_output(client.list_products(args.page, args.limit))
 
     elif args.command == "get":
         format_output(client.get_product(args.slug))

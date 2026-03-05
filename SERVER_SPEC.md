@@ -20,11 +20,14 @@ app = FastAPI()
 
 # 1. Product Discovery
 @app.get("/products")
-async def list_products(q: Optional[str] = None):
+async def list_products(q: Optional[str] = None, page: int = 1, limit: int = 50):
     # If q is provided, search products, otherwise return all
     return {
         "success": True,
         "total": 1,
+        "page": page,
+        "limit": limit,
+        "totalPages": 1,
         "products": [
             {
                 "slug": "premium-coffee-beans",
@@ -103,8 +106,14 @@ async def view_cart(x_visitor_id: Optional[str] = Header(None)):
 
 ### A. Product Discovery
 `GET /products` | `GET /products/{slug}`
-- **Params**: `q` (search query), `category` (filter).
-- **Required Model Attributes**:
+- **Params**: `q` (search query), `category` (filter), `page` (integer, default 1), `limit` (integer, default 50).
+- **Required Response Model (List)**:
+  - `products`: Array of product objects.
+  - `page`: Current page number.
+  - `limit`: Items per page.
+  - `total`: Total items across all pages.
+  - `totalPages`: Total number of pages available.
+- **Required Model Attributes (Product Object)**:
   - `slug`: String
   - `name`: String
   - `variants` (or array of objects): Must contain a `variant` key (String or Number) and `price` (Number). *(Note: Legacy `gram` is also supported for backward compatibility)*

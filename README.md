@@ -26,7 +26,7 @@ The **Standard Agentic Commerce Engine** eliminates the friction of building cus
 
 2.  **Run with Agent/CLI**:
     ```bash
-    python3 scripts/commerce.py list
+    python3 scripts/commerce.py list --page 1 --limit 20
     ```
 
 ## Structure
