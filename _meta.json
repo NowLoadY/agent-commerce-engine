@@ -1,6 +1,27 @@
 {
   "ownerId": "kn76pfsvteah6a92fc420fyt757zzpey",
   "slug": "agent-commerce-engine",
-  "version": "1.6.0",
-  "publishedAt": 1772728582537
+  "version": "1.6.1",
+  "publishedAt": 1772728582537,
+  "install": [
+    {
+      "id": "python-deps",
+      "kind": "pip",
+      "package": "requests",
+      "label": "Install Python HTTP client"
+    }
+  ],
+  "requires": {
+    "bins": [
+      "python3"
+    ],
+    "paths": [
+      "~/.clawdbot/credentials/agent-commerce-engine/"
+    ]
+  },
+  "optionalEnv": {
+    "COMMERCE_URL": "Deprecated fallback for --store flag. Will be removed in v2.0.",
+    "COMMERCE_BRAND_ID": "Deprecated. store_id is now auto-derived from the URL domain.",
+    "COMMERCE_BRAND_NAME": "Deprecated. Optional display name only."
+  }
 }
