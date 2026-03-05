@@ -159,8 +159,35 @@ def main():
     subparsers.add_parser("company-info", help="Get formal company information")
     subparsers.add_parser("contact-info", help="Get official contact details")
 
+    # 5. Local management
+    subparsers.add_parser("stores", help="List all locally registered stores with saved credentials")
+
     args = parser.parse_args()
 
+    # --- Commands that don't require a store URL ---
+    if args.command == "stores":
+        creds_root = Path.home() / ".clawdbot" / "credentials" / "agent-commerce-engine"
+        if not creds_root.exists():
+            print(json.dumps({"success": True, "stores": [], "instruction": "No registered stores found."}))
+            sys.exit(0)
+        stores = []
+        for d in sorted(creds_root.iterdir()):
+            if d.is_dir():
+                has_creds = (d / "creds.json").exists()
+                has_visitor = (d / "visitor.json").exists()
+                store_info = {"domain": d.name, "authenticated": has_creds, "has_visitor": has_visitor}
+                if has_creds:
+                    try:
+                        with open(d / "creds.json") as f:
+                            creds = json.load(f)
+                            store_info["account"] = creds.get("account", "unknown")
+                    except:
+                        pass
+                stores.append(store_info)
+        print(json.dumps({"success": True, "stores": stores, "total": len(stores)}, indent=2, ensure_ascii=False))
+        sys.exit(0)
+
+    # --- Commands that require a store URL ---
     # Resolve store URL: --store > COMMERCE_URL env var > error
     store_url = args.store or _ENV_URL
     if not store_url:
