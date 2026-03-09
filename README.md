@@ -48,7 +48,7 @@ The **Standard Agentic Commerce Engine** eliminates the friction of building cus
 This engine handles user credentials following these standards:
 
 - **Token-Only Storage**: Only API tokens are persisted locally. Passwords are never stored — they are exchanged once for a token via `/auth/token`, then discarded.
-- **Per-Domain Isolation**: Each merchant's credentials are stored in a separate subfolder: `~/.clawdbot/credentials/agent-commerce-engine/<domain>/`.
+- **Per-Domain Isolation**: Each merchant's credentials are stored in a separate subfolder: `~/.openclaw/credentials/agent-commerce-engine/<domain>/`.
 - **Access Control**: Stored credential files are restricted to `0600` permissions (owner read/write only).
 - **HTTPS Enforced**: The client library rejects non-HTTPS URLs for production endpoints.
 - **Stateless Identity**: Uses non-cookie header-based authentication to minimize tracking footprint.

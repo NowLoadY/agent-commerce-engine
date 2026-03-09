@@ -14,7 +14,7 @@ class BaseCommerceClient:
     cart management, product discovery, and multi-merchant credential isolation.
 
     Credentials are stored per-domain under:
-      ~/.clawdbot/credentials/agent-commerce-engine/<domain>/
+      ~/.openclaw/credentials/agent-commerce-engine/<domain>/
     """
     def __init__(self, base_url: str, brand_id: str = None):
         self.base_url = base_url.rstrip('/')
@@ -33,7 +33,7 @@ class BaseCommerceClient:
         self.brand_id = brand_id or self.store_id
 
         # Credential storage: isolated per domain
-        self.config_dir = Path.home() / ".clawdbot" / "credentials" / "agent-commerce-engine" / self.store_id
+        self.config_dir = Path.home() / ".openclaw" / "credentials" / "agent-commerce-engine" / self.store_id
         self.config_dir.mkdir(parents=True, exist_ok=True)
 
         self.creds_file = self.config_dir / "creds.json"
@@ -48,7 +48,7 @@ class BaseCommerceClient:
         """Migrate old flat-file credentials ({brand_id}_creds.json) to new per-domain subfolder."""
         if legacy_brand_id is None:
             return
-        legacy_dir = self.config_dir.parent  # ~/.clawdbot/credentials/agent-commerce-engine/
+        legacy_dir = self.config_dir.parent  # ~/.openclaw/credentials/agent-commerce-engine/
         legacy_creds = legacy_dir / f"{legacy_brand_id}_creds.json"
         legacy_visitor = legacy_dir / f"{legacy_brand_id}_visitor.json"
         if legacy_creds.exists() and not self.creds_file.exists():

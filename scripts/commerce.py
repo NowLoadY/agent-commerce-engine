@@ -166,7 +166,7 @@ def main():
 
     # --- Commands that don't require a store URL ---
     if args.command == "stores":
-        creds_root = Path.home() / ".clawdbot" / "credentials" / "agent-commerce-engine"
+        creds_root = Path.home() / ".openclaw" / "credentials" / "agent-commerce-engine"
         if not creds_root.exists():
             print(json.dumps({"success": True, "stores": [], "instruction": "No registered stores found."}))
             sys.exit(0)
