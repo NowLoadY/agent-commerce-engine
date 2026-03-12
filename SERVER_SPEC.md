@@ -160,7 +160,21 @@ The `instruction` field SHOULD accompany the `error` code to provide human/agent
 
 ## 4. API Endpoints Reference
 
-### A. Product Discovery
+### A. Version Discovery (Recommended)
+`GET /`
+- **Purpose**: Allows Agents to discover the backend's spec version and capabilities before making further requests.
+- **Response**:
+  ```json
+  {
+    "success": true,
+    "spec_version": "1.7.0",
+    "brand": "Your Store Name",
+    "capabilities": ["products", "cart", "orders", "auth", "brand"]
+  }
+  ```
+- **Behavior**: If not implemented, Agents should assume the latest spec version and degrade gracefully on 404.
+
+### B. Product Discovery
 `GET /products` | `GET /products/{slug}`
 - **Params**: `q` (search query), `category` (filter), `page` (integer, default 1), `limit` (integer, default 50).
 - **Required Response Model (List)**:
@@ -170,27 +184,40 @@ The `instruction` field SHOULD accompany the `error` code to provide human/agent
   - `total`: Total items across all pages.
   - `totalPages`: Total number of pages available.
 - **Required Model Attributes (Product Object)**:
-  - `slug`: String
+  - `slug`: String — Stable, human-readable identifier.
   - `name`: String
-  - `variants`: Must contain a `variant` key, `price` (Number), and `currency` (String, e.g., "CNY", "USD").
+  - `variants`: Array of variant objects (see Variant Schema below).
 - **Error Codes**: `PRODUCT_NOT_FOUND` (for single slug lookup).
 
-### B. Brand Information
+#### Variant Schema
+Each variant object MUST contain:
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `variant` | **String** | ✅ | The variant identifier. Always transmitted as a string, even for numeric values (e.g., `"200"` for 200g). This is the value Agents pass to `add-cart --variant`. |
+| `price` | Number | ✅ | Unit price for this variant. |
+| `currency` | String | ✅ | ISO 4217 code (e.g., `"CNY"`, `"USD"`). |
+| `label` | String | ❌ | Human-readable display name (e.g., `"Best Value"`, `"家庭囤货"`). |
+| `variant_type` | String | ❌ | Semantic hint for the Agent: `"weight"`, `"size"`, `"color"`, `"count"`, `"bundle"`. Helps Agents present options intelligently (e.g., "Which size?" vs "How many grams?"). Defaults to `"weight"` if omitted for backward compatibility. |
+
+> **Design Note**: `variant` is always a **string** in the protocol. Backends that use numeric gram values (e.g., `200`) MUST serialize them as strings in the JSON response and accept both string and numeric forms in cart requests. This eliminates type ambiguity for Agents.
+
+### C. Brand Information
 `GET /brand?category=<type>`
 - **Types**: `story`, `company`, `contact`.
 
-### C. Shopping Cart
+### D. Shopping Cart
 `GET /cart` | `POST /cart` | `PUT /cart` | `DELETE /cart`
-- **Request Body**: `{ "product_slug": string, "variant": string/number, "quantity": number }`. 
+- **Request Body**: `{ "product_slug": string, "variant": string, "quantity": number }`.
 - **Response**: Return the full cart snapshot including `totalPrice`, `currency`, and `items` (each item should also carry its `currency`).
 - **Error Codes**: `PRODUCT_NOT_FOUND`, `VARIANT_UNAVAILABLE`, `BAD_REQUEST`.
 
-### D. User Profile
+### E. User Profile
 `GET /user/profile` | `PUT /user/profile`
 - **Schema**: Should support common fields like `name`, `address`, and `phone`.
 - **Error Codes**: `AUTH_REQUIRED`.
 
-### E. Checkout & Payment Handoff
+### F. Checkout & Payment Handoff
 `POST /orders` | `GET /orders`
 - **Request Body (POST)**: `{ "shipping": { "name": "...", "phone": "...", "province": "...", "city": "...", "address": "..." } }`
 - **Behavior (POST)**: Transforms the current cart (identified securely by Token or Visitor ID) into a formal Order. Must clear the active cart upon success and return an `<ORDER_ID>`.
@@ -204,5 +231,6 @@ The `instruction` field SHOULD accompany the `error` code to provide human/agent
 1. **Leverage the `instruction` field**: Use it to communicate contextual information like stock status, VIP restrictions, available alternatives, or shipping constraints. This avoids protocol bloat while keeping Agents fully informed.
 2. **Handle Typos Gracefully**: If an Agent requests a category that doesn't exist, return a list of `available_categories` within the `instruction`.
 3. **Always return `success: false`** with a valid `error` code for any failed operation. Never return a bare HTTP error without a JSON body.
+4. **Implement `GET /`** with `spec_version` so Agents can negotiate capabilities and handle version differences gracefully.
 
 ---

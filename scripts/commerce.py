@@ -17,59 +17,13 @@ except ImportError:
 # Add lib path to sys.path
 sys.path.append(str(Path(__file__).parent))
 from lib.commerce_client import BaseCommerceClient
+from lib.formatters import format_output
 
 # DEPRECATED: Environment variable configuration.
 # Prefer using --store argument for multi-merchant support.
 # These env vars will be removed in a future major version.
 _ENV_URL = os.getenv("COMMERCE_URL")
 _ENV_BRAND_ID = os.getenv("COMMERCE_BRAND_ID")
-_ENV_BRAND_NAME = os.getenv("COMMERCE_BRAND_NAME", "Commerce Store")
-
-def get_currency_symbol(code):
-    symbols = {"CNY": "¥", "USD": "$", "EUR": "€", "GBP": "£", "JPY": "¥"}
-    return symbols.get(code, f"{code} ")
-
-def format_output(data, command=None):
-    if isinstance(data, dict) and "error" in data:
-        if "Connection error" in str(data.get("error", "")) and _ENV_URL is None:
-            data["hint"] = "No store URL configured. Use --store <url> or set COMMERCE_URL env var."
-    
-    if command == "cart" and isinstance(data, dict) and data.get("success") and "items" in data:
-        if not data["items"]:
-            print("Your cart is empty.")
-        else:
-            curr = data.get("currency", "USD")
-            print(f"{'Item':<25} | {'Variant':<15} | {'Price':<10} | {'Qty':<4} | {'Subtotal':<10}")
-            for item in data["items"]:
-                name = item.get("product_name", item.get("product_slug", ""))
-                variant = item.get("variant", item.get("gram", ""))
-                price = item.get("price", 0)
-                qty = item.get("quantity", 0)
-                subtotal = price * qty
-                i_sym = get_currency_symbol(item.get("currency", curr))
-                print(f"{name[:25]:<25} | {str(variant):<15} | {i_sym}{price:<9.2f} | {qty:<4} | {i_sym}{subtotal:<9.2f}")
-            
-            tp = data.get("totalPrice", 0)
-            cur = get_currency_symbol(data.get("currency", curr))
-            print(f"Total: {cur}{tp:.2f}")
-
-    elif command == "list" and isinstance(data, dict) and data.get("success") and "products" in data:
-        for p in data["products"]:
-            name = p.get("name")
-            slug = p.get("slug")
-            print(f"• {name} ({slug})")
-            if p.get("variants"):
-                v_list = []
-                for v in p["variants"]:
-                    v_name = v.get("variant", v.get("gram"))
-                    v_price = v.get("price")
-                    v_curr = get_currency_symbol(v.get("currency", "USD"))
-                    v_list.append(f"{v_name}: {v_curr}{v_price}")
-                print(f"  Variants: {' | '.join(v_list)}")
-        print(f"Total: {data.get('total')} items found | Page {data.get('page')}/{data.get('totalPages')}")
-
-    else:
-        print(json.dumps(data, indent=2, ensure_ascii=False))
 
 def main():
     parser = argparse.ArgumentParser(description="Agentic Commerce Engine — Universal CLI")
@@ -199,7 +153,6 @@ def main():
         sys.exit(1)
 
     # Initialize client with resolved URL
-    # DEPRECATED: brand_id from env var, will be removed in future version
     client = BaseCommerceClient(store_url, _ENV_BRAND_ID)
 
     # Execution logic
