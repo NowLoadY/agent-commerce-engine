@@ -1,14 +1,14 @@
 # Server-Side Implementation Specification (Agent-Native API)
 
-This document defines the standard API responses and behaviors required for a website backend to be fully compatible with the **Standard Agentic Commerce Engine**.
+This document defines the API responses and behaviors required for a website backend to work with the **Standard Agentic Commerce Engine**.
 
-By following this specification, any e-commerce backend (Next.js, Python/Django, Go, Node.js etc.) can be autonomously navigated and operated by AI Agents using the `commerce.py` client.
+By following this specification, an e-commerce backend (Next.js, Python/Django, Go, Node.js, and similar stacks) can expose a stable commerce interface that agents can use through the `commerce.py` client.
 
 ---
 
 ## 🚀 Quick Start: Building a Compatible Backend (Python/FastAPI Example)
 
-To make your website "Agent-Ready" instantly, you just need to implement a few REST endpoints that return standard JSON.
+To support this client, a backend needs to implement a small set of REST endpoints that return standard JSON.
 
 Here is a minimum viable Example using **FastAPI** (Python):
 
@@ -172,7 +172,7 @@ The `instruction` field SHOULD accompany the `error` code to provide human/agent
     "capabilities": ["products", "cart", "orders", "auth", "brand"]
   }
   ```
-- **Behavior**: If not implemented, Agents should assume the latest spec version and degrade gracefully on 404.
+- **Behavior**: If not implemented, agents should assume the latest spec version and degrade gracefully on 404.
 
 ### B. Product Discovery
 `GET /products` | `GET /products/{slug}`
@@ -222,7 +222,7 @@ Each variant object MUST contain:
 - **Request Body (POST)**: `{ "shipping": { "name": "...", "phone": "...", "province": "...", "city": "...", "address": "..." } }`
 - **Behavior (POST)**: Transforms the current cart (identified securely by Token or Visitor ID) into a formal Order. Must clear the active cart upon success and return an `<ORDER_ID>`.
 - **Error Codes**: `CART_EMPTY`, `AUTH_REQUIRED`, `BAD_REQUEST`.
-- **Payment Limitation (Crucial)**: Automated agents currently cannot complete interactive consumer payments (like credit card 3D Secure, Apple Pay, WeChat Pay). Wait for the API to return a payment link or an order dashboard URL (e.g. `https://yourstore.com/orders/<ORDER_ID>`). The Agent must deliver this final URL to the human to complete checkout.
+- **Payment Limitation (Crucial)**: Automated agents currently cannot complete interactive consumer payments (such as credit card 3D Secure, Apple Pay, or WeChat Pay). The API should return a payment link or order dashboard URL (for example `https://yourstore.com/orders/<ORDER_ID>`), and the agent should hand that URL to the human user to complete checkout.
 
 ---
 
