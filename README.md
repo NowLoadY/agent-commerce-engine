@@ -2,7 +2,7 @@
 
 A production-ready universal engine for Agentic Commerce. This tool enables autonomous agents to interact with any compatible headless e-commerce backend through a standardized protocol. It provides out-of-the-box support for discovery, cart operations, and secure user management.
 
-Clawdhub: https://clawdhub.com/NowLoadY/agent-commerce-engine
+clawhub: https://clawhub.com/NowLoadY/agent-commerce-engine
 GitHub: https://github.com/NowLoadY/agent-commerce-engine
 
 ## Why?
@@ -72,7 +72,7 @@ MIT License - Supporting the open acceleration of Agentic Commerce standards.
 
 面向 Agentic Commerce 的通用核心引擎。本工具提供了一套标准、高精度的协议，用于将自主 Agent 与任何无头 (Headless) 电商后端完美连接。
 
-Clawdhub: https://clawdhub.com/NowLoadY/agent-commerce-engine
+clawhub: https://clawhub.com/NowLoadY/agent-commerce-engine
 GitHub: https://github.com/NowLoadY/agent-commerce-engine
 
 ## 快速开始

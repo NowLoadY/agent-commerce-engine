@@ -18,7 +18,7 @@ The `agent-commerce-engine` provides a standard specification (`SERVER_SPEC.md`)
 
 ## Reference Case: Lafeitu
 
-For a production-grade implementation example using this engine, see the [Lafeitu Gourmet Skill](https://clawdhub.com/NowLoadY/agentic-spicy-food). It demonstrates the engine specialized for a real-world artisanal food brand.
+For a production-grade implementation example using this engine, see the [Lafeitu Gourmet Skill](https://clawhub.com/NowLoadY/agentic-spicy-food). It demonstrates the engine specialized for a real-world artisanal food brand.
 
 ---
 ## 🔒 Security & Privacy
